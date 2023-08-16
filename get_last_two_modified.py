@@ -10,20 +10,23 @@ def lambda_handler(event, context):
     s3 = boto3.client('s3')
 
     # List objects in the specified path and get metadata
-    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=path_prefix)
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=path_prefix, Delimiter='/')
     objects = response.get('Contents', [])
     
     # Sort objects by LastModified in descending order
     objects.sort(key=itemgetter('LastModified'), reverse=True)
     
-    # Retrieve the last two files and their upload dates
-    if len(objects) >= 2:
-        last_file = objects[0]
-        second_last_file = objects[1]
+    # Filter out directories and retrieve the names of the last two files
+    file_objects = [obj for obj in objects if not obj['Key'].endswith('/')]
+    if len(file_objects) >= 2:
+        last_file_name = file_objects[0]['Key']
+        second_last_file_name = file_objects[1]['Key']
         
-        last_upload_date = last_file['LastModified']
-        second_last_upload_date = second_last_file['LastModified']
+        last_upload_date = file_objects[0]['LastModified']
+        second_last_upload_date = file_objects[1]['LastModified']
         
+        print("Last file name:", last_file_name)
+        print("Second last file name:", second_last_file_name)
         print("Last file upload date:", last_upload_date)
         print("Second last file upload date:", second_last_upload_date)
         
@@ -35,6 +38,8 @@ def lambda_handler(event, context):
         
         # You can return these values if needed
         return {
+            'last_file_name': last_file_name,
+            'second_last_file_name': second_last_file_name,
             'last_upload_date': str(last_upload_date),
             'second_last_upload_date': str(second_last_upload_date)
         }
