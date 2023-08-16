@@ -2,14 +2,15 @@ import boto3
 from operator import itemgetter
 
 def lambda_handler(event, context):
-    # Configure your S3 bucket details
+    # Configure your S3 bucket and path details
     bucket_name = 'your-bucket-name'
+    path_prefix = 'specific/path/'  # Specify the path prefix
     
     # Create an S3 client
     s3 = boto3.client('s3')
 
-    # List objects in the bucket and get metadata
-    response = s3.list_objects_v2(Bucket=bucket_name)
+    # List objects in the specified path and get metadata
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=path_prefix)
     objects = response.get('Contents', [])
     
     # Sort objects by LastModified in descending order
@@ -38,7 +39,7 @@ def lambda_handler(event, context):
             'second_last_upload_date': str(second_last_upload_date)
         }
     else:
-        print("Less than two files in the bucket.")
+        print("Less than two files in the specified path.")
         return {
-            'message': 'Less than two files in the bucket.'
+            'message': 'Less than two files in the specified path.'
         }
