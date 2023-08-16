@@ -1,6 +1,5 @@
 import boto3
-import csv
-from difflib import ndiff
+from difflib import Differ
 
 # Configurations
 bucket_name1 = 'bucket-name-1'
@@ -55,8 +54,10 @@ def compare_csv_in_chunks(s3_client, bucket_name1, file_key1, bucket_name2, file
         csv_data2 = read_csv_chunk(s3_client, bucket_name2, file_key2, start_byte, end_byte2)
 
         # Compare CSV data in this chunk
-        chunk_differences = list(ndiff(csv_data1, csv_data2))
-        differences.extend(chunk_differences)
+        diff = Differ()
+        chunk_differences = list(diff.compare(csv_data1, csv_data2))
+        chunk_added_lines = [line[2:] for line in chunk_differences if line.startswith('+ ')]
+        differences.extend(chunk_added_lines)
 
     return differences
 
