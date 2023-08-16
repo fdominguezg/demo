@@ -21,8 +21,8 @@ def lambda_handler(event, context):
     
     # Retrieve the names of the last two files
     if len(file_objects) >= 2:
-        last_file_name = file_objects[0]['Key']
-        second_last_file_name = file_objects[1]['Key']
+        last_file_name = file_objects[0]['Key'].split('/')[-1]  # Extract the last part of the key as the file name
+        second_last_file_name = file_objects[1]['Key'].split('/')[-1]  # Extract the last part of the key as the file name
         
         last_upload_date = file_objects[0]['LastModified']
         second_last_upload_date = file_objects[1]['LastModified']
