@@ -10,14 +10,16 @@ def lambda_handler(event, context):
     s3 = boto3.client('s3')
 
     # List objects in the specified path and get metadata
-    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=path_prefix, Delimiter='/')
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=path_prefix)
     objects = response.get('Contents', [])
-    
-    # Sort objects by LastModified in descending order
-    objects.sort(key=itemgetter('LastModified'), reverse=True)
     
     # Filter out directories and retrieve the names of the last two files
     file_objects = [obj for obj in objects if not obj['Key'].endswith('/')]
+    
+    # Sort file objects by LastModified in descending order
+    file_objects.sort(key=itemgetter('LastModified'), reverse=True)
+    
+    # Retrieve the names of the last two files
     if len(file_objects) >= 2:
         last_file_name = file_objects[0]['Key']
         second_last_file_name = file_objects[1]['Key']
