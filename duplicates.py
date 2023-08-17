@@ -51,4 +51,15 @@ def lambda_handler(event, context):
         
         # Write the dataframes to the buffers
         unique.to_csv(output_buffer, index=False, header=False)
-        duplicates.to_csv(duplicates_buffer,
+        duplicates.to_csv(duplicates_buffer, index=False, header=False)
+    
+    # Upload the cleaned CSV data to S3 (output with no duplicates)
+    s3_client.put_object(Bucket=bucket_name, Key=output_file_key, Body=output_buffer.getvalue())
+    
+    # Upload the duplicates CSV data to S3
+    s3_client.put_object(Bucket=bucket_name, Key=duplicates_file_key, Body=duplicates_buffer.getvalue())
+    
+    return {
+        'statusCode': 200,
+        'body': f'Duplicates removed and files saved to S3. Original: {output_file_key}, Duplicates: {duplicates_file_key}'
+    }
