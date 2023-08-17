@@ -1,5 +1,6 @@
 import boto3
 import pandas as pd
+import io
 
 def lambda_handler(event, context):
     # Set your AWS region
@@ -18,40 +19,36 @@ def lambda_handler(event, context):
     input_file = s3_client.get_object(Bucket=bucket_name, Key=input_file_key)
     input_stream = input_file['Body']
     
-    # Load CSV data into a pandas DataFrame
-    df = pd.read_csv(input_stream)
-    
-    # Determine the "imei" column name
-    imei_column = None
-    for column in df.columns:
-        if column.lower() == 'imei':
-            imei_column = column
-            break
-    
-    if imei_column is None:
-        return {
-            'statusCode': 400,
-            'body': 'No "imei" column found in the CSV file.'
-        }
-    
-    # Identify and remove duplicates based on the "imei" column
-    duplicates = df[df.duplicated(subset=[imei_column], keep=False)]
-    unique = df.drop_duplicates(subset=[imei_column])
-    
-    # Save the unique and duplicates DataFrames as CSV files
+    # Create in-memory buffers for the cleaned files
     output_buffer = io.StringIO()
-    unique.to_csv(output_buffer, index=False)
-    
     duplicates_buffer = io.StringIO()
-    duplicates.to_csv(duplicates_buffer, index=False)
     
-    # Upload the cleaned CSV data to S3 (output with no duplicates)
-    s3_client.put_object(Bucket=bucket_name, Key=output_file_key, Body=output_buffer.getvalue())
+    # Initialize the CSV writers
+    output_writer = csv.writer(output_buffer)
+    duplicates_writer = csv.writer(duplicates_buffer)
     
-    # Upload the duplicates CSV data to S3
-    s3_client.put_object(Bucket=bucket_name, Key=duplicates_file_key, Body=duplicates_buffer.getvalue())
+    # Process the input CSV file in chunks
+    chunk_size = 10000  # Adjust the chunk size based on your memory and performance requirements
+    chunk_iter = pd.read_csv(input_stream, chunksize=chunk_size)
     
-    return {
-        'statusCode': 200,
-        'body': f'Duplicates removed and files saved to S3. Original: {output_file_key}, Duplicates: {duplicates_file_key}'
-    }
+    for chunk_df in chunk_iter:
+        # Determine the "imei" column name
+        imei_column = None
+        for column in chunk_df.columns:
+            if column.lower() == 'imei':
+                imei_column = column
+                break
+        
+        if imei_column is None:
+            return {
+                'statusCode': 400,
+                'body': 'No "imei" column found in the CSV file.'
+            }
+        
+        # Identify and remove duplicates based on the "imei" column
+        duplicates = chunk_df[chunk_df.duplicated(subset=[imei_column], keep=False)]
+        unique = chunk_df.drop_duplicates(subset=[imei_column])
+        
+        # Write the dataframes to the buffers
+        unique.to_csv(output_buffer, index=False, header=False)
+        duplicates.to_csv(duplicates_buffer,
