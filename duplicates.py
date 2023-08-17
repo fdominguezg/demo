@@ -47,10 +47,6 @@ def lambda_handler(event, context):
     output_buffer = io.StringIO()
     duplicates_buffer = io.StringIO()
     
-    # Initialize the CSV writers
-    output_writer = csv.writer(output_buffer)
-    duplicates_writer = csv.writer(duplicates_buffer)
-    
     for chunk_df in chunk_iter:
         # Identify and remove duplicates based on the "imei" column
         duplicates = chunk_df[chunk_df.duplicated(subset=[header_row[imei_column_idx]], keep=False)]
