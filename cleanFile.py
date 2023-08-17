@@ -32,13 +32,13 @@ def lambda_handler(event, context):
             line, cleaned_chunk = cleaned_chunk.split(b'\n', 1)
             output_chunks.append(line + b'\n')
     
-    # Upload the cleaned CSV chunks to S3
-    s3 = boto3.resource('s3', region_name=region_name)
-    output_file = s3.Object(bucket_name, output_file_key)
+    # Combine the cleaned chunks and create a cleaned CSV file in memory as a string
+    cleaned_data = b''.join(output_chunks)
+    cleaned_csv = cleaned_data.decode('utf-8')
     
-    for chunk in output_chunks:
-        with io.BytesIO(chunk) as chunk_stream:
-            output_file.upload_part(Body=chunk_stream)
+    # Upload the cleaned CSV data as a new file to S3
+    s3 = boto3.client('s3', region_name=region_name)
+    s3.put_object(Bucket=bucket_name, Key=output_file_key, Body=cleaned_csv)
     
     return {
         'statusCode': 200,
