@@ -10,12 +10,19 @@ target_directory = 'target_directory/'  # Replace with the actual target directo
 target_chunk_size = 100 * 1024 * 1024  # 100MB in bytes (target chunk size)
 
 def split_csv_into_chunks(file_content, chunk_size):
+    lines = file_content.split(b'\n')
     chunks = []
-    remaining = file_content
-    while len(remaining) > chunk_size:
-        chunk, remaining = remaining[:chunk_size], remaining[chunk_size:]
-        chunks.append(chunk)
-    chunks.append(remaining)
+    current_chunk = b""
+    
+    for line in lines:
+        if len(current_chunk) + len(line) + 1 > chunk_size:
+            chunks.append(current_chunk)
+            current_chunk = b""
+        current_chunk += line + b'\n'
+    
+    if current_chunk:
+        chunks.append(current_chunk)
+    
     return chunks
 
 def lambda_handler(event, context):
