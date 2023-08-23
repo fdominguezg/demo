@@ -21,8 +21,6 @@ def split_csv_into_chunks(file_content, chunk_size):
 def lambda_handler(event, context):
     bucket = s3.Bucket(bucket_name)
     obj = bucket.Object(source_key)
-    total_bytes = obj.content_length
-    total_chunks = int(math.ceil(total_bytes / target_chunk_size))
     
     file_content = obj.get()['Body'].read()
     chunks = split_csv_into_chunks(file_content, target_chunk_size)
