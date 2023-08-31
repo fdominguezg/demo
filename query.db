@@ -1,0 +1,8 @@
+aws dynamodb query \
+  --table-name YourTableName \
+  --index-name YourIndexName \  # Optional if you're using a secondary index
+  --key-condition-expression "timestampAttribute BETWEEN :startTime AND :endTime" \
+  --expression-attribute-values '{
+    ":startTime": {"N": "UnixTimestampForStartTime"},
+    ":endTime": {"N": "UnixTimestampForEndTime"}
+  }'
