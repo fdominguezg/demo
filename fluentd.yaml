@@ -1,0 +1,15 @@
+<source>
+  @id fluent-containers.log
+  @type tail
+  path /var/log/containers/camunda_engine-*.log  # Update the filename pattern as needed
+  pos_file /var/log/containers.camunda_engine.pos
+  tag camunda_engine.logs
+  format none  # No format specified, treating logs as plain text
+
+  <parse>
+    @type multiline
+    format_firstline /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}/
+    format1 /^(?<log_time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})/
+    time_format %Y-%m-%d %H:%M:%S,%L
+  </parse>
+</source>
